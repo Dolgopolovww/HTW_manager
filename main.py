@@ -1,14 +1,16 @@
+from pprint import pprint
+
 from fastapi import FastAPI
 import uvicorn
 from starlette.requests import Request
 from starlette.responses import Response
 
 from core.settings import settings
-from src.app.api import router
+from src.app.api.routers import routers
+
 from src.app.db.db import SessionLocal
 
-app = FastAPI()
-app.include_router(router)
+app = FastAPI(title="HTW_manager")
 
 
 @app.middleware('http')
@@ -21,8 +23,11 @@ async def db_session_middleware(request: Request, call_next):
         request.state.db.close()
     return response
 
+app.include_router(routers)
+
+
 if __name__ == '__main__':
     uvicorn.run("main:app",
-                port=settings.server_port,
-                host=settings.server_host,
+                port=8888,#settings.server_port,
+                host="0.0.0.0", #settings.server_host,
                 reload=True)

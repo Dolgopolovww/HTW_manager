@@ -1,9 +1,17 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.schema import DropTable
+
+from src.app.db.db import engine
 
 Base = declarative_base()
 
+
+@compiles(DropTable, "postgresql")
+def _compile_drop_table(element, compiler, **kwargs):
+    return compiler.visit_drop_table(element) + " CASCADE"
 
 class Rank(Base):
     __tablename__ = 'ranks'
@@ -80,5 +88,5 @@ class User_project(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     project_id = Column(Integer, ForeignKey('projects.id'))
 
-# Base.metadata.drop_all(engine)
+#Base.metadata.drop_all(engine)
 # Base.metadata.create_all(engine)
