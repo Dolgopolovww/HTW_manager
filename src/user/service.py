@@ -6,14 +6,14 @@ from sqlalchemy.orm import Session
 from core.security import verify_password, get_password_hash
 from src.base.service import CRUDBase
 from src.user.models import User, User_token
-from src.user.schemas import User_create, User_update
+from src.user import schemas
 
 
-class CRUDUser(CRUDBase[User, User_create, User_update]):
-    def get_by_email(self, db_session: Session, *, email: str) -> Optional[User]:
+class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update]):
+    def get_by_email(self, db_session: Session, *, email: str) -> Optional[schemas.User]:
         return db_session.query(User).filter(User.email == email).first()
 
-    def get_by_user_id(self, db_session: Session, user_id: int) -> Optional[User]:
+    def get_by_user_id(self, db_session: Session, user_id: int) -> Optional[schemas.User]:
         res = db_session.query(User).filter(User.id == user_id).first()
         return res
 
@@ -23,14 +23,14 @@ class CRUDUser(CRUDBase[User, User_create, User_update]):
     def is_superuser(self, user: User) -> bool:
         return user.super_user
 
-    def create(self, db_session: Session, *, obj_in: User_create) -> User:
-        req = User(email=obj_in.email, password_hash=get_password_hash(obj_in.password))
-        db_session.add(req)
+    def create(self, db_session: Session, *, obj_in: schemas.User_create) -> schemas.User:
+        user = User(email=obj_in.email, password_hash=get_password_hash(obj_in.password))
+        db_session.add(user)
         db_session.commit()
-        db_session.refresh(req)
-        return req
+        db_session.refresh(user)
+        return user
 
-    def update_by_user_id(self, db_session: Session, *, obj_in: User_update, user_id: int) -> Optional[User]:
+    def update_by_user_id(self, db_session: Session, *, obj_in: schemas.User_update, user_id: int) -> Optional[schemas.User]:
         db_session.query(User).filter(User.id == user_id).update({
             User.name: obj_in.name, User.surname: obj_in.surname, User.patronymic: obj_in.patronymic,
             User.password_hash: get_password_hash(obj_in.password), User.avatar: obj_in.avatar,
@@ -39,47 +39,12 @@ class CRUDUser(CRUDBase[User, User_create, User_update]):
             User.experience: obj_in.experience})
         db_session.commit()
 
-    def authenticate(self, db_session: Session, *, email: str, password: str) -> Optional[User]:
+    def authenticate(self, db_session: Session, *, email: str, password: str) -> Optional[schemas.User]:
         user = self.get_by_email(db_session, email=email)
         if not user:
             return None
         if not verify_password(password, user.password_hash):
             return None
         return user
-
-    def delete_old_refresh_token(self, db_session: Session, user_id: int, fingerprint: str):
-        """
-        Удаление старого рефреш токена пользователя, при повторной авторизации.
-        :param db_session:
-        :param user_id:
-        :param fingerprint:
-        :return:
-        """
-        user_refresh_token = db_session.query(User_token).filter(User_token.user_id == user_id,
-                                                                 User_token.fingerprint == fingerprint).first()
-        if user_refresh_token:
-            db_session.delete(user_refresh_token)
-
-    def save_token(self, db_session: Session, user_id: int, refresh_token: str, fingerprint: str, issued: int,
-                   expires: int):
-        req = User_token(
-            user_id=user_id,
-            refresh_token=refresh_token,
-            fingerprint=fingerprint,
-            issued=issued,
-            expires_in=expires)
-        db_session.add(req)
-        db_session.commit()
-        db_session.refresh(req)
-        return req
-
-    def update_tokens(self, db_session: Session, user_id: int, old_refresh_tokens: str, new_refresh_token: str):
-        db_session.query(User_token).filter(User_token.user_id == user_id,
-                                            User_token.refresh_token == old_refresh_tokens).\
-            update({User_token.refresh_token: new_refresh_token})
-
-
-        db_session.commit()
-
 
 crud_user = CRUDUser(User)

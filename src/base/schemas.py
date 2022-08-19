@@ -14,6 +14,7 @@ class Token_auth(Token):
 class TokenPayload(BaseModel):
     user_id: int = None
 
+
 class RefreshTokenUser(BaseModel):
     user_id: int
     refresh_token: str
@@ -21,6 +22,7 @@ class RefreshTokenUser(BaseModel):
     ip: str
     issued: datetime
     expires_in: datetime
+
 
 class Msg(BaseModel):
     msg: str

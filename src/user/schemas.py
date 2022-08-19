@@ -70,5 +70,6 @@ class User(User_base_in_db):
 
 
 
+
 class UserInDB(User_base_in_db):
     hashed_password: str
