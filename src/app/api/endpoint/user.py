@@ -100,7 +100,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     return crud_user.get_by_user_id(db_session=db, user_id=user_id)
 
 
-@router.post("/create-user", tags=["user"], response_model=Token_auth)
+@router.post("/create-user", tags=["user"], response_model=schemas.User_base_in_db)
 def create_user(*, db: Session = Depends(get_db), user_in: schemas.User_create):
     """
     Создание пользователя
@@ -111,8 +111,7 @@ def create_user(*, db: Session = Depends(get_db), user_in: schemas.User_create):
     user = crud_user.get_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует.")
-    crud_user.create(db, obj_in=user_in)
-    user = auth_user(form_data=user_in, db=db)
+    user = crud_user.create(db, obj_in=user_in)
 
     return user
 

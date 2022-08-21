@@ -23,7 +23,7 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
     def is_superuser(self, user: User) -> bool:
         return user.super_user
 
-    def create(self, db_session: Session, *, obj_in: schemas.User_create) -> schemas.User:
+    def create(self, db_session: Session, *, obj_in: schemas.User_create) -> schemas.User_base_in_db:
         user = User(email=obj_in.email, password_hash=get_password_hash(obj_in.password))
         db_session.add(user)
         db_session.commit()
