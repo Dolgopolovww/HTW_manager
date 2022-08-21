@@ -29,7 +29,6 @@ class Project_link(Base):
     link = Column(String)
     description = Column(String)
 
-    project_links = relationship("Project")
 
 
 class Project(Base):
