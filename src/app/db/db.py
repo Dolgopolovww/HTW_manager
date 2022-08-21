@@ -12,10 +12,6 @@ SQLALCHEMY_DATABASE_URL = f"postgresql://postgres:{settings.database_password}@{
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-try:
-    engine.connect()
-except Exception as ex:
-    raise print(f"Данные для подключения к БД не верны")
 
 
 def get_db(request: Request):
