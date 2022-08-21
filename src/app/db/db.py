@@ -1,3 +1,6 @@
+import sys
+
+import psycopg2
 from icecream import ic
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,6 +15,13 @@ SQLALCHEMY_DATABASE_URL = f"postgresql://postgres:{settings.database_password}@{
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+try:
+    engine.connect()
+except Exception as ex:
+    print(f'Некорректные данные для подключения к БД!\n{ex}')
+
 
 
 def get_db(request: Request):

@@ -26,13 +26,11 @@ async def db_session_middleware(request: Request, call_next):
 
 app.include_router(routers)
 
-try:
-    engine.connect()
-    if __name__ == '__main__':
-        uvicorn.run("main:app",
-                    port=8888,  # settings.server_port,
-                    host="0.0.0.0",  # settings.server_host,
-                    reload=True)
 
-except Exception as ex:
-    print(f"Данные для подключения к БД не верны {ex}")
+if __name__ == '__main__':
+    uvicorn.run("main:app",
+                port=8888,  # settings.server_port,
+                host="0.0.0.0",  # settings.server_host,
+                reload=True)
+
+
