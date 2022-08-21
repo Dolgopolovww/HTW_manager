@@ -48,6 +48,7 @@ class User_update(User_base):
     rank: Optional_rank
     salary: str
     comments: str
+    competencies: str
     experience: date
     role: Optional_role
 

@@ -21,6 +21,7 @@ class User(Base):
     rank = Column(Integer, ForeignKey('ranks.id'))
     salary = Column(String)
     comments = Column(String)
+    competencies = Column(String)
     experience = Column(Date)
     role = Column(Integer, ForeignKey('roles.id'))
     super_user = Column(Boolean)

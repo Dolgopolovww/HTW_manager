@@ -36,6 +36,8 @@ def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_cre
 @router.put("/update-project", tags=["project"], response_model=schemas.Project_base_in_db)
 def update_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_update, project_id: int):
     project = crud_project.update_by_project_id(db, obj_in, project_id)
+    if not project:
+        raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
     return project
 
 
