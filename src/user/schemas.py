@@ -12,7 +12,6 @@ class User_auth(BaseModel):
 
 class User_base(BaseModel):
     email: str
-    is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
 
 
@@ -24,16 +23,51 @@ class User_base_in_db(User_base):
 
 
 class Optional_rank(str, Enum):
-    name = 1
-    name2 = 2
+    trainee = 1  # стажер
+    junior = 2  # джун
+    junior_plus = 3  # джун+
+    middle = 4  # мидл
+    middle_plus = 5  # мидл+
+    senior = 6  # сеньор
+
 
 class Optional_role(str, Enum):
-    name = 1
-    name2 = 2
+    supervisor = 1  # руководитель
+    employee = 2  # сотрудник
+    admin = 3  # админ
+
+class User(User_base_in_db):
+    name: str
+    surname: str
+    patronymic: str
+    avatar: str
+    dob: date
+    phone_number: int
+    other_contacts: str
+    rank: int
+    salary: str
+    comments: str
+    competencies: str
+    experience: date
+    role: int
+
 
 class User_create(User_base):
     password: str
     fingerprint: str
+    name: str
+    surname: str
+    patronymic: str
+    avatar: str
+    dob: date
+    phone_number: int
+    other_contacts: str
+    rank: Optional_rank
+    salary: str
+    comments: str
+    competencies: str
+    experience: date
+    role: Optional_role
 
 
 class User_update(User_base):
@@ -53,24 +87,3 @@ class User_update(User_base):
     role: Optional_role
 
 
-class User(User_base_in_db):
-    name: str
-    surname: str
-    patronymic: str
-    avatar: str
-    dob: date
-    phone_number: int
-    other_contacts: str
-    rank: int
-    salary: str
-    comments: str
-    experience: date
-    role: int
-
-
-
-
-
-
-class UserInDB(User_base_in_db):
-    hashed_password: str

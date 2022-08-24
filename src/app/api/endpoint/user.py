@@ -91,7 +91,7 @@ def get_all_users(db: Session = Depends(get_db), skip: int = 0, limit: int = 100
     :param current_user: проверка на суперпользователя
     :return:
     """
-    users = crud_user.get_multi(db, skip=skip, limit=limit)
+    users = crud_user.get_all_user(db, skip=skip, limit=limit)
     return users
 
 
@@ -100,7 +100,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     return crud_user.get_by_user_id(db_session=db, user_id=user_id)
 
 
-@router.post("/create-user", tags=["user"], response_model=schemas.User_base_in_db)
+@router.post("/create-user", tags=["user"], response_model=schemas.User)
 def create_user(*, db: Session = Depends(get_db), user_in: schemas.User_create):
     """
     Создание пользователя

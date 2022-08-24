@@ -1,11 +1,9 @@
-from sqlalchemy import Column, String, Text, DateTime, Integer, Boolean, ForeignKey, Date
+from sqlalchemy import Column, String, Text, Integer, Boolean, ForeignKey, Date, BigInteger
 from sqlalchemy.orm import relationship
-from src.project.models import Project, Project_link, Rank, Role
-
 from src.app.db.db import Base
 
-
 class User(Base):
+    # пользователь
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -15,7 +13,7 @@ class User(Base):
     password_hash = Column(Text)
     avatar = Column(String)
     dob = Column(Date)
-    phone_number = Column(Integer)
+    phone_number = Column(BigInteger)
     email = Column(String)
     other_contacts = Column(String)
     rank = Column(Integer, ForeignKey('ranks.id'))
@@ -26,21 +24,24 @@ class User(Base):
     role = Column(Integer, ForeignKey('roles.id'))
     super_user = Column(Boolean)
 
-    teamlead = relationship("Project")
+    user_id_teamlead = relationship("Project")
     user_id_project = relationship("User_project")
     user_id_token = relationship("User_token")
+    user_id_project_team = relationship("Project_team")
 
 
 
 class User_project(Base):
+    # проекты пользователя
     __tablename__ = 'user_projects'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id_project = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
     project_id = Column(Integer, ForeignKey('projects.id'))
 
 
 class User_token(Base):
+    # токен пользователя и данные для него
     __tablename__ = 'user_tokens'
 
     id = Column(Integer, primary_key=True, autoincrement=True)

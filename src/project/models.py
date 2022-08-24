@@ -4,24 +4,27 @@ from sqlalchemy.orm import relationship
 from src.app.db.db import Base
 
 class Rank(Base):
+    # ранг пользователя (стажер, джун, джун+, мид, мид+, сеньор)
     __tablename__ = 'ranks'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=True)
 
-    rank = relationship("User")
+    user_rank = relationship("User")
 
 
 class Role(Base):
+    # роль пользователя (руководитель, сотрудник, админ)
     __tablename__ = 'roles'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
 
-    role = relationship("User")
+    user_role = relationship("User")
 
 
 class Project_link(Base):
+    # проектные ссылки
     __tablename__ = 'project_links'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -30,8 +33,17 @@ class Project_link(Base):
     description = Column(String)
 
 
+class Project_team(Base):
+    # команда проекта
+    __tablename__ = 'project_teams'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey('projects.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
+
 
 class Project(Base):
+    # проект
     __tablename__ = 'projects'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -40,9 +52,9 @@ class Project(Base):
     time_project_implementation = Column(Date)
     description = Column(String)
     path_design_documents = Column(String)
-    teamlead = Column(Integer, ForeignKey('users.id'))
+    team_lead = Column(Integer, ForeignKey('users.id'))
     status = Column(Boolean)
 
     project_id = relationship("User_project")
-    id_project_links = relationship("Project_link")
-
+    project_id_links = relationship("Project_link")
+    project_id_project_team = relationship("Project_team")
