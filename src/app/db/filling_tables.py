@@ -1,7 +1,9 @@
 from sqlalchemy.orm import sessionmaker
 
 from src.app.db.session import engine
-from src.app.db.tables import Role, Rank
+from src.app.db.db import Base
+from src.user.models import User
+from src.project.models import Rank, Role, Project_link, Project
 
 Session = sessionmaker(bind=engine)
 session = Session()
