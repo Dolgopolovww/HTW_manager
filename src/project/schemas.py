@@ -14,6 +14,7 @@ class Project_base(BaseModel):
     team_lead: int
     status: bool
 
+
 class Project_links(BaseModel):
     link: str
     description: str
