@@ -22,6 +22,8 @@ from icecream import ic
 
 router = APIRouter()
 
+# TODO: при добавлении нового проекта, можно указать путь к документации, нужно решить как это сделать корректно
+# TODO: сделать добавление команды проекта
 
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
 def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_create):
@@ -33,26 +35,34 @@ def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_cre
     return project
 
 
-@router.put("/update-project", tags=["project"], response_model=schemas.Project_base_in_db)
+@router.put("/update-project", tags=["project"], response_model=schemas.Project_update)
 def update_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_update, project_id: int):
-    project = crud_project.update_by_project_id(db, obj_in, project_id)
+    project = crud_project.get_by_id(db, project_id)
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
-    return project
+    return crud_project.update_by_project_id(db, obj_in, project_id)
+
+
 
 
 @router.get("/get-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
-def get_all_projects(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_all_projects(*, db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     return crud_project.get_multi(db, skip=skip, limit=limit)
 
 
 @router.get("/get-by-project-id", tags=["project-get"], response_model=schemas.Project_base_in_db)
 def get_project_by_id(*, db: Session = Depends(get_db), project_id: int):
-    return crud_project.get_by_id(db, project_id)
+    project = crud_project.get_by_id(db, project_id)
+    if not project:
+        raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
+    return project
 
 
 @router.get("/get-by-project-name", tags=["project-get"], response_model=schemas.Project_base_in_db)
 def get_project_by_name(*, db: Session = Depends(get_db), project_name: str):
+    project = crud_project.get_by_project_name(db, project_name)
+    if not project:
+        raise HTTPException(status_code=400, detail=f"Проект с именем {project_name} не найден")
     return crud_project.get_by_project_name(db, project_name)
 
 

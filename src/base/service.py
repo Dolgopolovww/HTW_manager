@@ -1,6 +1,7 @@
 from typing import List, Optional, Generic, TypeVar, Type
 
 from fastapi.encoders import jsonable_encoder
+from icecream import ic
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -18,8 +19,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def get_by_id(self, db_session: Session, id: int) -> Optional[ModelType]:
         return db_session.query(self.model).filter(self.model.id == id).first()
 
-    def get_multi(self, db_session: Session, *, skip=0, limit=100) -> List[ModelType]:
-        return db_session.query(self.model).offset(skip).limit(limit).all()
+    def get_multi(self, db_session: Session, *, skip=0, limit=100) -> List[Optional[ModelType]]:
+        res = db_session.query(self.model).offset(skip).limit(limit).all()
+        for i in res:
+            ic(i)
+        return res
 
     def create(self, db_session: Session, *, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)

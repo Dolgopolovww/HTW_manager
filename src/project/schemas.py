@@ -7,10 +7,11 @@ from pydantic import BaseModel
 class Project_base(BaseModel):
     name: str
     customer: str
-    time_project_implementation: date
+    project_start: date
+    project_completion: date
     description: str
     path_design_documents: str
-    teamlead: int
+    team_lead: int
     status: bool
 
 class Project_links(BaseModel):

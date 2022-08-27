@@ -13,7 +13,6 @@ from src.app.db.db import SessionLocal, engine
 app = FastAPI(title="HTW_manager")
 
 
-
 @app.middleware('http')
 async def db_session_middleware(request: Request, call_next):
     response = Response('Internal server error', status_code=500)

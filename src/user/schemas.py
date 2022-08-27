@@ -54,7 +54,6 @@ class User(User_base_in_db):
 
 class User_create(User_base):
     password: str
-    fingerprint: str
     name: str
     surname: str
     patronymic: str
