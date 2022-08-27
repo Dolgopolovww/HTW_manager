@@ -20,7 +20,7 @@ class Project_links(BaseModel):
 
 
 class Project_create(Project_base):
-    pass
+    team: List[int]
 
 
 class Project_update(Project_base):

@@ -20,23 +20,28 @@ from src.project.service import crud_project
 
 from icecream import ic
 
+from src.user.service import crud_user
+
 router = APIRouter()
 
 # TODO: при добавлении нового проекта, можно указать путь к документации, нужно решить как это сделать корректно
 # TODO: сделать добавление команды проекта
+# TODO: сделать запрос на получение команды проекта по id и по имени проекта
 
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
 def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_create):
     check_project = crud_project.get_by_project_name(db, obj_in.name)
     if check_project:
         raise HTTPException(status_code=400, detail="Проект с таким именем уже существует.")
-
     project = crud_project.create(db, obj_in)
     return project
 
 
+
+
 @router.put("/update-project", tags=["project"], response_model=schemas.Project_update)
 def update_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_update, project_id: int):
+    # TODO: сделать возможность обновления команды проекта
     project = crud_project.get_by_id(db, project_id)
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")

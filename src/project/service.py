@@ -1,6 +1,8 @@
 from typing import Optional
 
+from fastapi import HTTPException
 from icecream import ic
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.base.service import CRUDBase
@@ -18,15 +20,29 @@ class CRUDProject(CRUDBase):
 
 
     def create(self, db_session: Session, obj_in: schemas.Project_create) -> Optional[schemas.Project_base_in_db]:
-        project = models.Project(name=obj_in.name, customer=obj_in.customer,
-                                 project_start=obj_in.project_start, project_completion=obj_in.project_completion,
-                                 description=obj_in.description, path_design_documents=obj_in.path_design_documents,
-                                 team_lead=obj_in.team_lead, status=obj_in.status)
-        db_session.add(project)
-        db_session.commit()
-        db_session.refresh(project)
-        return project
-    
+        try:
+            project = models.Project(name=obj_in.name, customer=obj_in.customer,
+                                     project_start=obj_in.project_start, project_completion=obj_in.project_completion,
+                                     description=obj_in.description, path_design_documents=obj_in.path_design_documents,
+                                     team_lead=obj_in.team_lead, status=obj_in.status)
+            db_session.add(project)
+            db_session.flush()
+            project_id = self.get_by_project_name(db_session, obj_in.name)
+            for i in obj_in.team:
+                team_project = models.Project_team(project_id=project_id.id, user_id=i)
+                db_session.add(team_project)
+            db_session.commit()
+            return project
+
+        except IntegrityError as ex:
+            db_session.rollback()
+            raise HTTPException(status_code=400, detail=f"id пользователя которого вы хотите добавить в команду не найден\n{ex}")
+
+
+
+
+
+
 
 
 
