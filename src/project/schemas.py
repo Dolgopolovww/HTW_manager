@@ -21,11 +21,11 @@ class Project_links(BaseModel):
 
 
 class Project_create(Project_base):
-    pass
+    team: List[int]
 
 
 class Project_update(Project_base):
-    pass
+    team: List[int]
 
 
 class Project_base_in_db(Project_base):
@@ -33,6 +33,7 @@ class Project_base_in_db(Project_base):
 
     class Config:
         orm_mode = True
+
 
 class Project_links_in_db(Project_links):
     id: int
