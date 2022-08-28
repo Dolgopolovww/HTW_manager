@@ -24,7 +24,7 @@ class Project_create(Project_base):
 
 
 class Project_update(Project_base):
-    pass
+    team: List[int]
 
 
 class Project_base_in_db(Project_base):

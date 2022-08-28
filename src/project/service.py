@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import HTTPException
 from icecream import ic
@@ -39,24 +39,24 @@ class CRUDProject(CRUDBase):
             raise HTTPException(status_code=400, detail=f"id пользователя которого вы хотите добавить в команду не найден\n{ex}")
 
 
-
-
-
-
-
-
-
-
     def update_by_project_id(self, db_session: Session, obj_in: schemas.Project_update, project_id: int) -> Optional[schemas.Project_update]:
-        db_session.query(models.Project).filter(models.Project.id == project_id).update({
-            models.Project.name: obj_in.name, models.Project.customer: obj_in.customer,
-            models.Project.project_start: obj_in.project_start,
-            models.Project.project_completion: obj_in.project_completion,
-            models.Project.description: obj_in.description,
-            models.Project.path_design_documents: obj_in.path_design_documents,
-            models.Project.team_lead: obj_in.team_lead, models.Project.status: obj_in.status})
-        db_session.commit()
-        return obj_in
+        try:
+            db_session.query(models.Project).filter(models.Project.id == project_id).update({
+                models.Project.name: obj_in.name, models.Project.customer: obj_in.customer,
+                models.Project.project_start: obj_in.project_start,
+                models.Project.project_completion: obj_in.project_completion,
+                models.Project.description: obj_in.description,
+                models.Project.path_design_documents: obj_in.path_design_documents,
+                models.Project.team_lead: obj_in.team_lead, models.Project.status: obj_in.status})
+            db_session.flush()
+            for i in obj_in.team:
+                team_project = models.Project_team(project_id=project_id, user_id=i)
+                db_session.add(team_project)
+            db_session.commit()
+            return obj_in
+        except IntegrityError as ex:
+            db_session.rollback()
+            raise HTTPException(status_code=400, detail=f"id пользователя которого вы хотите добавить в команду не найден\n{ex}")
 
 
     def add_links_project(self, db_session: Session, obj_in: schemas.Project_links, project_id: int):
