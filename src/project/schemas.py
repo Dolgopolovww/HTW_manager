@@ -33,6 +33,7 @@ class Project_base_in_db(Project_base):
     class Config:
         orm_mode = True
 
+
 class Project_links_in_db(Project_links):
     id: int
 
