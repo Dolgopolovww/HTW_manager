@@ -27,7 +27,6 @@ def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_cre
 
 @router.put("/update-project", tags=["project"], response_model=schemas.Project_update)
 def update_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_update, project_id: int):
-    # TODO: сделать возможность обновления команды проекта
     project = crud_project.get_by_id(db, project_id)
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
@@ -61,7 +60,7 @@ def get_project_links_by_id(*, db: Session = Depends(get_db), project_id: int):
 
 
 @router.get("/get-project-team", tags=["project-get"], response_model=List[User])
-def get_project_links_by_id(*, db: Session = Depends(get_db), project_id: int):
+def get_team_project(*, db: Session = Depends(get_db), project_id: int):
     project = crud_project.get_by_id(db, project_id)
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект c id {project_id} не найден")

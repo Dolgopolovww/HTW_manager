@@ -23,11 +23,9 @@ class CRUDProject(CRUDBase):
 
 
     def get_team_project_by_project_id(self, db_session: Session, project_id: int) -> List[Optional[schemas_user.User]]:
-        team_project = db_session.query(models.Project_team).filter(models.Project_team.project_id == project_id).all()
-        users = []
-        for i in team_project:
-            users.append(db_session.query(models_user.User).filter(models_user.User.id == i.user_id).first())
-        return users
+        query = db_session.query(models_user.User).select_from(models.Project_team)\
+            .join(models_user.User).filter(models.Project_team.project_id == project_id).all()
+        return query
 
 
     def create(self, db_session: Session, obj_in: schemas.Project_create) -> Optional[schemas.Project_base_in_db]:
