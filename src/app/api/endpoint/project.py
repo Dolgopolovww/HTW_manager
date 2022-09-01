@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query
+from icecream import ic
 
 from sqlalchemy.orm import Session
 
@@ -10,10 +11,11 @@ from src.project import schemas
 from src.project.service import crud_project
 
 from src.user.schemas import User
+from src.user.service import crud_user
 
 router = APIRouter()
 
-# TODO: при добавлении нового проекта, можно указать путь к документации, нужно решить как это сделать корректно
+# TODO: добавить таблицу в БД "файлы проекта", типо файловая помойка
 
 
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
@@ -68,6 +70,17 @@ def get_team_project(*, db: Session = Depends(get_db), project_id: int):
     if not team_project:
         raise HTTPException(status_code=400, detail=f"У проекта с id {project_id} не назначена команда")
     return team_project
+
+
+@router.get("/get-user-projects", tags=["user-get"], response_model=List[schemas.Project_base_in_db])
+def get_user_projects_by_id(*, db: Session = Depends(get_db), user_id: int):
+    user = crud_user.get_by_user_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail=f"Пользователь c id {user_id} не найден")
+    user_projects = crud_project.get_user_project_by_user_id(db, user_id)
+    if len(user_projects) == 0:
+        raise HTTPException(status_code=400, detail=f"У пользователя нет проектов")
+    return user_projects
 
 
 @router.post("/add-link-project", tags=["project"])

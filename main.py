@@ -12,6 +12,7 @@ from src.app.db.db import SessionLocal, engine
 
 app = FastAPI(title="HTW_manager")
 
+# TODO: разграничить права доступа, для супер пользоватля и обычных пользователей
 
 @app.middleware('http')
 async def db_session_middleware(request: Request, call_next):

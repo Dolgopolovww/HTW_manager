@@ -28,6 +28,14 @@ class CRUDProject(CRUDBase):
         return query
 
 
+    def get_user_project_by_user_id(self, db_session: Session, user_id: int) -> List["Optional[schemas.Project_base_in_db]"]:
+        project = db_session.query(models.Project_team).filter(models.Project_team.user_id == user_id).all()
+        user_projects = []
+        for i in project:
+            user_projects.append(db_session.query(models.Project).filter(models.Project.id == i.project_id).first())
+        return user_projects
+
+
     def create(self, db_session: Session, obj_in: schemas.Project_create) -> Optional[schemas.Project_base_in_db]:
         try:
             project = models.Project(name=obj_in.name, customer=obj_in.customer,
