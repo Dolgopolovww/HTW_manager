@@ -33,6 +33,16 @@ class Project_link(Base):
     description = Column(String)
 
 
+class Project_file(Base):
+    # файлы проекта
+    __tablename__ = 'project_files'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_project = Column(Integer, ForeignKey("projects.id"))
+    path_file = Column(String)
+    description = Column(String)
+
+
 class Project_team(Base):
     # команда проекта
     __tablename__ = 'project_teams'
@@ -56,6 +66,5 @@ class Project(Base):
     team_lead = Column(Integer, ForeignKey('users.id'))
     status = Column(Boolean)
 
-    project_id = relationship("User_project")
     project_id_links = relationship("Project_link")
     project_id_project_team = relationship("Project_team")

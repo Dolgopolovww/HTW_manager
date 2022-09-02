@@ -25,19 +25,8 @@ class User(Base):
     super_user = Column(Boolean)
 
     user_id_teamlead = relationship("Project")
-    user_id_project = relationship("User_project")
     user_id_token = relationship("User_token")
     user_id_project_team = relationship("Project_team")
-
-
-
-class User_project(Base):
-    # проекты пользователя
-    __tablename__ = 'user_projects'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    project_id = Column(Integer, ForeignKey('projects.id'))
 
 
 class User_token(Base):
