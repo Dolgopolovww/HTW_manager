@@ -1,6 +1,8 @@
+import os
+import shutil
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query, File, UploadFile
 from icecream import ic
 
 from sqlalchemy.orm import Session
@@ -15,7 +17,28 @@ from src.user.service import crud_user
 
 router = APIRouter()
 
-# TODO: добавить таблицу в БД "файлы проекта", типо файловая помойка
+# TODO: сделать возможность сохранения картинок/документов/всякого в папку с проектом, и сохранением в БД, путь до файла и описание
+
+
+
+@router.post("/add-project-file")
+def add_file(project_name: str, file: List[UploadFile] = File(...)):
+    if os.path.exists(f"projects"):
+        pass
+    else:
+        os.mkdir(f"projects")
+
+    if os.path.exists(f"projects/{project_name}"):
+        os.listdir(f"projects/{project_name}")
+    else:
+        os.mkdir(f"projects/{project_name}")
+
+    path = f"projects/{project_name}"
+    for i in file:
+        with open(f"{path}/{i.filename}", 'wb') as buffer:
+            shutil.copyfileobj(i.file, buffer)
+
+
 
 
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
