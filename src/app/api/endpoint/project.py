@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 from typing import List
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query, File, UploadFile
@@ -15,6 +16,7 @@ from src.project.service import crud_project
 from src.user.schemas import User
 from src.user.service import crud_user
 
+
 router = APIRouter()
 
 # TODO: сделать возможность сохранения картинок/документов/всякого в папку с проектом, и сохранением в БД, путь до файла и описание
@@ -23,17 +25,19 @@ router = APIRouter()
 
 @router.post("/add-project-file")
 def add_file(project_name: str, file: List[UploadFile] = File(...)):
-    if os.path.exists(f"projects"):
+
+    root_dir = os.path.dirname(sys.modules['__main__'].__file__)
+    if os.path.exists(f"{root_dir}/projects"):
         pass
     else:
-        os.mkdir(f"projects")
+        os.mkdir(f"{root_dir}/projects")
 
-    if os.path.exists(f"projects/{project_name}"):
-        os.listdir(f"projects/{project_name}")
+    if os.path.exists(f"{root_dir}/projects/{project_name}"):
+        os.listdir(f"{root_dir}/projects/{project_name}")
     else:
-        os.mkdir(f"projects/{project_name}")
+        os.mkdir(f"{root_dir}/projects/{project_name}")
 
-    path = f"projects/{project_name}"
+    path = f"{root_dir}/projects/{project_name}"
     for i in file:
         with open(f"{path}/{i.filename}", 'wb') as buffer:
             shutil.copyfileobj(i.file, buffer)
