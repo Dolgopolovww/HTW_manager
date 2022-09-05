@@ -8,6 +8,8 @@ from src.base.service import CRUDBase
 from src.user.models import User, User_token
 from src.user import schemas
 
+from src.project.models import Project_team
+
 
 class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update]):
     def get_by_email(self, db_session: Session, *, email: str) -> Optional[schemas.User]:
@@ -58,5 +60,18 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
         if not verify_password(password, user.password_hash):
             return None
         return user
+
+
+    def delete_user_by_id(self, db_session: Session, user_id: int):
+        try:
+            db_session.query(Project_team).filter(Project_team.user_id == user_id).delete()
+            db_session.flush()
+            db_session.query(User).filter(User.id == user_id).delete()
+            db_session.commit()
+        except Exception as ex:
+            db_session.rollback()
+            ic(ex)
+
+
 
 crud_user = CRUDUser(User)

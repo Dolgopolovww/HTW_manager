@@ -129,3 +129,17 @@ def update_user(*, db: Session = Depends(get_db), user_in: schemas.User_update,
 def decode_access_token(token):
     res = decode_token(token)
     return res
+
+
+@router.delete("/delete-user-by-id", tags=["user"])
+def delete_user(*, db: Session = Depends(get_db), user_id: int):
+    user = crud_user.get_by_user_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail=f"Пользователь c id {user_id} не найден")
+
+    crud_user.delete_user_by_id(db, user_id)
+
+
+
+
+
