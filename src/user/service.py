@@ -22,6 +22,7 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
         return db_session.query(User).offset(skip).limit(limit).all()
 
 
+
     def get_by_token(self, db_session: Session, refresh_token: str):
         return db_session.query(User_token).filter(User_token.refresh_token == refresh_token).first()
 
@@ -43,7 +44,7 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
 
     def update_by_user_id(self, db_session: Session, *, obj_in: schemas.User_update, user_id: int) -> Optional[schemas.User]:
         db_session.query(User).filter(User.id == user_id).update({
-            User.name: obj_in.name, User.surname: obj_in.surname, User.patronymic: obj_in.patronymic,
+            User.email: obj_in.email, User.name: obj_in.name, User.surname: obj_in.surname, User.patronymic: obj_in.patronymic,
             User.password_hash: get_password_hash(obj_in.password), User.avatar: obj_in.avatar,
             User.dob: obj_in.dob, User.phone_number: obj_in.phone_number, User.other_contacts: obj_in.other_contacts,
             User.rank: obj_in.rank, User.role: obj_in.role, User.salary: obj_in.salary, User.comments: obj_in.comments,

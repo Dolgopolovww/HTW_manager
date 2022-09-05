@@ -93,8 +93,8 @@ def get_all_users(db: Session = Depends(get_db), skip: int = 0, limit: int = 100
     :param current_user: проверка на суперпользователя
     :return:
     """
-    users = crud_user.get_all_user(db, skip=skip, limit=limit)
-    return users
+    return crud_user.get_all_user(db, skip=skip, limit=limit)
+
 
 
 @router.get("/get-by-user-id", tags=["user-get"], response_model=schemas.User)
