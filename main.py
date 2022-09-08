@@ -1,3 +1,4 @@
+
 from pprint import pprint
 
 from fastapi import FastAPI
@@ -12,7 +13,8 @@ from src.app.db.db import SessionLocal, engine
 
 app = FastAPI(title="HTW_manager")
 
-# TODO: разграничить права доступа, для супер пользоватля и обычных пользователей
+# TODO: разграничить права доступа, для супер пользователя и обычных пользователей
+# TODO: сделать для тестов дешифратор паролей
 
 @app.middleware('http')
 async def db_session_middleware(request: Request, call_next):

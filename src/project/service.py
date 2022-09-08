@@ -1,6 +1,9 @@
+import os
+import shutil
+import sys
 from typing import Optional, List
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from icecream import ic
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -36,7 +39,22 @@ class CRUDProject(CRUDBase):
         return user_projects
 
 
-    def create(self, db_session: Session, obj_in: schemas.Project_create) -> Optional[schemas.Project_base_in_db]:
+    def path_validation(self, project_name: str):
+        root_dir = os.path.dirname(sys.modules['__main__'].__file__)
+        if os.path.exists(f"{root_dir}/projects"):
+            pass
+        else:
+            os.mkdir(f"{root_dir}/projects")
+
+        if os.path.exists(f"{root_dir}/projects/{project_name}"):
+            pass
+        else:
+            os.mkdir(f"{root_dir}/projects/{project_name}")
+        path_project = f"{root_dir}/projects/{project_name}"
+        return path_project
+
+
+    def create(self, db_session: Session, obj_in: schemas.Project_create, files: list) -> Optional[schemas.Project_base_in_db]:
         try:
             project = models.Project(name=obj_in.name, customer=obj_in.customer,
                                      project_start=obj_in.project_start, project_completion=obj_in.project_completion,
@@ -50,10 +68,9 @@ class CRUDProject(CRUDBase):
                 db_session.add(team_project)
             db_session.commit()
             return project
-
-        except IntegrityError as ex:
+        except Exception as ex:
             db_session.rollback()
-            raise HTTPException(status_code=400, detail=f"id пользователя которого вы хотите добавить в команду не найден\n{ex}")
+            raise HTTPException(status_code=400, detail=f"{ex.args}")
 
 
     def update_by_project_id(self, db_session: Session, obj_in: schemas.Project_update, project_id: int) -> Optional[schemas.Project_update]:
@@ -89,6 +106,25 @@ class CRUDProject(CRUDBase):
                                                            models.Project_link.id == link_id).first()
         db_session.delete(req)
         db_session.commit()
+
+
+    def file_validator(self, db_session: Session, path_file: str):
+        return db_session.query(models.Project_file).filter(models.Project_file.path_file == path_file).first()
+
+
+    def add_files_project_by_project_id(self, db_session: Session, project_id: int, file: UploadFile, path_project: str):
+        try:
+            req = models.Project_file(id_project=project_id, path_file=f"{path_project}/{file.filename}")
+            db_session.add(req)
+            db_session.commit()
+            with open(f"{path_project}/{file.filename}", "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+        except Exception as ex:
+            ic(ex)
+            db_session.rollback()
+
+
+
 
 
 

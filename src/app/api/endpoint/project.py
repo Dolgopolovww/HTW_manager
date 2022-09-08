@@ -3,9 +3,11 @@ import shutil
 import sys
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query, File, UploadFile
+from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query, File, UploadFile, Header, Form
 from icecream import ic
 
+
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.app.db.db import get_db
@@ -16,32 +18,12 @@ from src.project.service import crud_project
 from src.user.schemas import User
 from src.user.service import crud_user
 
+from pyfa_converter import FormDepends, PyFaDepends
+
 
 router = APIRouter()
 
 # TODO: сделать возможность сохранения картинок/документов/всякого в папку с проектом, и сохранением в БД, путь до файла и описание
-
-
-
-@router.post("/add-project-file")
-def add_file(project_name: str, file: List[UploadFile] = File(...)):
-
-    root_dir = os.path.dirname(sys.modules['__main__'].__file__)
-    if os.path.exists(f"{root_dir}/projects"):
-        pass
-    else:
-        os.mkdir(f"{root_dir}/projects")
-
-    if os.path.exists(f"{root_dir}/projects/{project_name}"):
-        os.listdir(f"{root_dir}/projects/{project_name}")
-    else:
-        os.mkdir(f"{root_dir}/projects/{project_name}")
-
-    path = f"{root_dir}/projects/{project_name}"
-    for i in file:
-        with open(f"{path}/{i.filename}", 'wb') as buffer:
-            shutil.copyfileobj(i.file, buffer)
-
 
 
 
@@ -60,6 +42,25 @@ def update_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_upd
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
     return crud_project.update_by_project_id(db, obj_in, project_id)
+
+
+@router.put("/add-files-project", tags=["project"])
+def add_files_project(project_id: int, db: Session = Depends(get_db), files: List[UploadFile] = File(...)):
+    check_project = crud_project.get_by_id(db, project_id)
+    if not check_project:
+        raise HTTPException(status_code=400, detail=f"Нельзя добавить файлы в несуществующий проект")
+    path_project = crud_project.path_validation(check_project.name)
+    res = []
+    for file in files:
+        check_file = crud_project.file_validator(db, f"{path_project}/{file.filename}")
+        if check_file:
+            res.append(f"Файл с именем {file.filename} уже существует")
+            pass
+        else:
+            crud_project.add_files_project_by_project_id(db, project_id, file, path_project)
+    if len(res) > 0:
+        return res
+
 
 
 @router.get("/get-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
