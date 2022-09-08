@@ -62,6 +62,11 @@ def add_files_project(project_id: int, db: Session = Depends(get_db), files: Lis
         return res
 
 
+@router.delete("/delete-file-project", tags=["project"])
+def delete_file_project(*, db: Session = Depends(get_db), project_id: int, file_id: int):
+    crud_project.delete_file_by_project_id(db, project_id, file_id)
+
+
 
 @router.get("/get-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
 def get_all_projects(*, db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
@@ -100,6 +105,17 @@ def get_team_project(*, db: Session = Depends(get_db), project_id: int):
     return team_project
 
 
+@router.get("/get-files-project", tags=["project-get"], response_model=List[schemas.Project_files_in_db])
+def get_files_project(*, db: Session = Depends(get_db), project_id: int):
+    project = crud_project.get_by_id(db, project_id)
+    if not project:
+        raise HTTPException(status_code=400, detail=f"Проект c id {project_id} не найден")
+    files_project = crud_project.get_files_project_by_project_id(db, project_id)
+    if not files_project:
+        raise HTTPException(status_code=400, detail=f"У проекта c id {project_id} нет добавленных файлов")
+    return files_project
+
+
 @router.get("/get-user-projects", tags=["user-get"], response_model=List[schemas.Project_base_in_db])
 def get_user_projects_by_id(*, db: Session = Depends(get_db), user_id: int):
     user = crud_user.get_by_user_id(db, user_id)
@@ -119,4 +135,6 @@ def add_link_project(*, db: Session = Depends(get_db), links: List[schemas.Proje
 @router.delete("/delete-link-project", tags=["project"])
 def delete_link_project(*, db: Session = Depends(get_db), project_id: int, link_id: int):
     crud_project.delete_link(db, project_id, link_id)
+
+
 

@@ -39,6 +39,12 @@ class CRUDProject(CRUDBase):
         return user_projects
 
 
+    def get_files_project_by_project_id(self, db_session: Session, project_id: int) -> List[Optional[schemas.Project_files_in_db]]:
+        res = db_session.query(models.Project_file).filter(models.Project_file.id_project == project_id).all()
+        ic(res)
+        return res
+
+
     def path_validation(self, project_name: str):
         root_dir = os.path.dirname(sys.modules['__main__'].__file__)
         if os.path.exists(f"{root_dir}/projects"):
@@ -122,6 +128,11 @@ class CRUDProject(CRUDBase):
         except Exception as ex:
             ic(ex)
             db_session.rollback()
+
+    def delete_file_by_project_id(self, db_session: Session, project_id: int, file_id: int):
+        req = db_session.query(models.Project_file).filter(models.Project_file.id_project == project_id, models.Project_file.id == file_id).first()
+        db_session.delete(req)
+        db_session.commit()
 
 
 

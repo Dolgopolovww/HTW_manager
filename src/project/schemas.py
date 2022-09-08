@@ -19,6 +19,9 @@ class Project_links(BaseModel):
     link: str
     description: str
 
+class Project_files(BaseModel):
+    path_file: str
+
 
 class Project_create(Project_base):
     team: List[int]
@@ -36,6 +39,12 @@ class Project_base_in_db(Project_base):
 
 
 class Project_links_in_db(Project_links):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class Project_files_in_db(Project_files):
     id: int
 
     class Config:
