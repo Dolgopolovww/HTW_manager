@@ -22,6 +22,8 @@ from icecream import ic
 
 router = APIRouter()
 
+# TODO: добавить возможность добавления аватарки пользователя
+
 @router.post("/auth/login", response_model=Token_auth, tags=["auth"])
 def auth_user(form_data: schemas.User_auth, db: Session = Depends(get_db)):
     """

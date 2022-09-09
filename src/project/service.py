@@ -26,9 +26,22 @@ class CRUDProject(CRUDBase):
 
 
     def get_team_project_by_project_id(self, db_session: Session, project_id: int) -> List[Optional[schemas_user.User]]:
-        query = db_session.query(models_user.User).select_from(models.Project_team)\
+        """
+        функция возвращает тим лида и команду разработки проекта
+        :param db_session: ссесия БД
+        :param project_id: id проекта
+        :return: команду проекта
+        """
+        project_team = db_session.query(models_user.User).select_from(models.Project_team)\
             .join(models_user.User).filter(models.Project_team.project_id == project_id).all()
-        return query
+
+        project_team_lead = db_session.query(models_user.User).select_from(models.Project).\
+            join(models_user.User).filter(models.Project.id == project_id).all()
+
+        if project_team_lead[0] in project_team:
+            return project_team
+        else:
+            return project_team_lead + project_team
 
 
     def get_user_project_by_user_id(self, db_session: Session, user_id: int) -> List["Optional[schemas.Project_base_in_db]"]:
