@@ -1,7 +1,7 @@
 from datetime import timedelta, date, datetime
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Security
+from fastapi import APIRouter, Body, Depends, HTTPException, Security, UploadFile, File
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt
@@ -22,7 +22,7 @@ from icecream import ic
 
 router = APIRouter()
 
-# TODO: добавить возможность добавления аватарки пользователя
+# TODO: добавить возможность получать аватарку пользователя
 
 @router.post("/auth/login", response_model=Token_auth, tags=["auth"])
 def auth_user(form_data: schemas.User_auth, db: Session = Depends(get_db)):
@@ -121,6 +121,20 @@ def create_user(*, db: Session = Depends(get_db), user_in: schemas.User_create):
 def update_user(*, db: Session = Depends(get_db), user_in: schemas.User_update,
                 user_id: int):
     return crud_user.update_by_user_id(db_session=db, obj_in=user_in, user_id=user_id)
+
+
+@router.put("/add-avatar-user", tags=["user"])
+def add_avatar_user(user_id: int, db: Session = Depends(get_db), avatar: UploadFile = File(...)):
+    user = crud_user.get_by_user_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail=f"Пользователь с id {user_id} не найден")
+    path_user = crud_user.path_validation(user_id)
+
+    get_avatar_user = crud_user.get_avatar_user(db, user_id)
+    if get_avatar_user:
+        crud_user.delete_avatar_user(db, user_id)
+    crud_user.add_avatar_user_by_user_id(db, user_id, avatar, path_user)
+
 
 
 

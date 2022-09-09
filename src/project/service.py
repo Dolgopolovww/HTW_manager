@@ -54,7 +54,6 @@ class CRUDProject(CRUDBase):
 
     def get_files_project_by_project_id(self, db_session: Session, project_id: int) -> List[Optional[schemas.Project_files_in_db]]:
         res = db_session.query(models.Project_file).filter(models.Project_file.id_project == project_id).all()
-        ic(res)
         return res
 
 
@@ -143,6 +142,8 @@ class CRUDProject(CRUDBase):
             db_session.rollback()
 
     def delete_file_by_project_id(self, db_session: Session, project_id: int, file_id: int):
+        # TODO: добавить удаление файла из файловой помойки
+        # TODO: реализовать архив, т.е. после удаления файла, файл помещается в архив, который удаляется раз в 30 дней
         req = db_session.query(models.Project_file).filter(models.Project_file.id_project == project_id, models.Project_file.id == file_id).first()
         db_session.delete(req)
         db_session.commit()

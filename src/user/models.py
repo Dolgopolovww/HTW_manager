@@ -26,6 +26,7 @@ class User(Base):
 
     user_id_teamlead = relationship("Project")
     user_id_token = relationship("User_token")
+    user_id_avatar = relationship("User_avatar")
     user_id_project_team = relationship("Project_team")
 
 
@@ -39,5 +40,13 @@ class User_token(Base):
     fingerprint = Column(Text)
     issued = Column(Integer)  # дата создания токена (1505467152069)
     expires_in = Column(Integer)  # время жизни токена (1505467756869)
+
+
+class User_avatar(Base):
+    __tablename__ = 'user_avatar'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    avatar_path = Column(String)
 
 

@@ -1,11 +1,15 @@
+import os
+import shutil
+import sys
 from typing import Optional, List
 
+from fastapi import UploadFile
 from icecream import ic
 from sqlalchemy.orm import Session
 
 from core.security import verify_password, get_password_hash
 from src.base.service import CRUDBase
-from src.user.models import User, User_token
+from src.user.models import User, User_token, User_avatar
 from src.user import schemas
 
 from src.project.models import Project_team
@@ -33,6 +37,19 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
         return user.super_user
 
 
+    def path_validation(self, user_id: int):
+        root_dir = os.path.dirname(sys.modules['__main__'].__file__)
+        if os.path.exists(f"{root_dir}/users"):
+            pass
+        else:
+            os.mkdir(f"{root_dir}/users")
+        if os.path.exists(f"{root_dir}/users/{user_id}"):
+            pass
+        else:
+            os.mkdir(f"{root_dir}/users/{user_id}")
+        path_project = f"{root_dir}/users/{user_id}"
+        return path_project
+
     def create(self, db_session: Session, *, obj_in: schemas.User_create) -> schemas.User_base_in_db:
         user = User(email=obj_in.email, super_user=obj_in.is_superuser, password_hash=get_password_hash(obj_in.password),
                     name=obj_in.name, surname=obj_in.surname, patronymic=obj_in.patronymic, avatar=obj_in.avatar,
@@ -53,6 +70,34 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
             User.competencies: obj_in.competencies, User.experience: obj_in.experience})
         db_session.commit()
 
+
+    def get_avatar_user(self, db_session: Session, user_id: int):
+        return db_session.query(User_avatar).filter(User_avatar.user_id == user_id).first()
+
+
+    def add_avatar_user_by_user_id(self, db_session: Session, user_id: int, avatar: UploadFile, path_user: str):
+        try:
+            req = User_avatar(user_id=user_id, avatar_path=f"{path_user}/{avatar.filename}")
+            db_session.add(req)
+            db_session.commit()
+            with open(f"{path_user}/{avatar.filename}", "wb") as buffer:
+                shutil.copyfileobj(avatar.file, buffer)
+        except Exception as ex:
+            ic(ex)
+            db_session.rollback()
+
+
+    def delete_avatar_user(self, db_session: Session, user_id: int):
+        try:
+            avatar_user = db_session.query(User_avatar).filter(User_avatar.user_id == user_id).first()
+            db_session.delete(avatar_user)
+            db_session.flush()
+            os.remove(avatar_user.avatar_path)
+        except Exception as ex:
+            ic(ex)
+            db_session.rollback()
+
+
     def authenticate(self, db_session: Session, *, email: str, password: str) -> Optional[schemas.User]:
         user = self.get_by_email(db_session, email=email)
         if not user:
@@ -63,6 +108,7 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
 
 
     def delete_user_by_id(self, db_session: Session, user_id: int):
+        # TODO: добавить удаление папки пользователя, при удаление самого пользователя
         try:
             db_session.query(Project_team).filter(Project_team.user_id == user_id).delete()
             db_session.flush()
