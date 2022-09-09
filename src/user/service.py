@@ -47,8 +47,8 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
             pass
         else:
             os.mkdir(f"{root_dir}/users/{user_id}")
-        path_project = f"{root_dir}/users/{user_id}"
-        return path_project
+        path_user = f"{root_dir}/users/{user_id}"
+        return path_user
 
     def create(self, db_session: Session, *, obj_in: schemas.User_create) -> schemas.User_base_in_db:
         user = User(email=obj_in.email, super_user=obj_in.is_superuser, password_hash=get_password_hash(obj_in.password),
@@ -93,6 +93,7 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
             db_session.delete(avatar_user)
             db_session.flush()
             os.remove(avatar_user.avatar_path)
+            db_session.commit()
         except Exception as ex:
             ic(ex)
             db_session.rollback()
@@ -108,12 +109,14 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
 
 
     def delete_user_by_id(self, db_session: Session, user_id: int):
-        # TODO: добавить удаление папки пользователя, при удаление самого пользователя
         try:
+            self.delete_avatar_user(db_session, user_id)
             db_session.query(Project_team).filter(Project_team.user_id == user_id).delete()
             db_session.flush()
             db_session.query(User).filter(User.id == user_id).delete()
             db_session.commit()
+            path_user = self.path_validation(user_id)
+            shutil.rmtree(path_user)
         except Exception as ex:
             db_session.rollback()
             ic(ex)
