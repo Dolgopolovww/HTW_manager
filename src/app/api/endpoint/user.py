@@ -1,28 +1,19 @@
-from datetime import timedelta, date, datetime
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Security, UploadFile, File
-from fastapi.encoders import jsonable_encoder
-from fastapi.security import OAuth2PasswordRequestForm
-from jose import jwt
-from pydantic.networks import EmailStr
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 from core.jwt import decode_token, create_token, refresh_token, save_token, update_user_tokens, delete_old_refresh_token
-from core.settings import settings
 from src.app.db.db import get_db
-from src.base.schemas import Token, RefreshTokenUser, Token_auth
-from src.security import get_current_active_superuser
-
-from src.user.models import User as DBUser
+from src.base.schemas import Token_auth
 from src.user import schemas
 from src.user.service import crud_user
 
-from icecream import ic
-
 router = APIRouter()
 
+
 # TODO: добавить возможность получать аватарку пользователя
+
 
 @router.post("/auth/login", response_model=Token_auth, tags=["auth"])
 def auth_user(form_data: schemas.User_auth, db: Session = Depends(get_db)):
@@ -44,8 +35,8 @@ def auth_user(form_data: schemas.User_auth, db: Session = Depends(get_db)):
                               type_token="access")
 
     save_token(db_session=db, user_id=user.id, refresh_token=jwt_refresh.get("refresh_token_jwt"),
-                         fingerprint=form_data.fingerprint,
-                         issued=jwt_refresh.get("payload")["iat"], expires=jwt_refresh.get("payload")["exp"])
+               fingerprint=form_data.fingerprint,
+               issued=jwt_refresh.get("payload")["iat"], expires=jwt_refresh.get("payload")["exp"])
     return {
         "access_token": jwt_access.get("access_encoded_jwt"),
         "refresh_token": jwt_refresh.get("refresh_token_jwt"),
@@ -65,8 +56,7 @@ def update_tokens(old_refresh_token: str, fingerprint: str, db: Session = Depend
 
     new_tokens = refresh_token(expired_token=old_refresh_token)
     update_user_tokens(db_session=db, user_id=user.user_id, old_refresh_tokens=old_refresh_token,
-                            new_refresh_token=new_tokens.get("refresh_token")["refresh_token_jwt"])
-
+                       new_refresh_token=new_tokens.get("refresh_token")["refresh_token_jwt"])
 
     return {
         "access_token": new_tokens["access_token"]["access_encoded_jwt"],
@@ -83,38 +73,31 @@ def logout_user():
 
 
 @router.get("/get-users", response_model=List[schemas.User], tags=["user-get"])
-def get_all_users(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
-    """
-    Получить всех пользователей
-    :param db: сессия БД
-    :param skip: offset
-    :param limit: лимит
-    :param current_user: проверка на суперпользователя
-    :return:
-    """
-    return crud_user.get_all_user(db, skip=skip, limit=limit)
+def get_all_users(db: Session = Depends(get_db)):
+    return crud_user.get_users(db)
 
 
+@router.get("/get-user-by-id", tags=["user-get"], response_model=schemas.User)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    return crud_user.get_user_by_id(db, user_id)
 
-@router.get("/get-by-user-id", tags=["user-get"], response_model=schemas.User)
-def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
-    return crud_user.get_by_user_id(db_session=db, user_id=user_id)
+
+@router.get("/get-free-user", tags=["user-get"], response_model=List[schemas.User])
+def get_free_user(db: Session = Depends(get_db)):
+    return crud_user.get_free_or_busy_user(db, False)
+
+
+@router.get("/get-busy-user", tags=["user-get"], response_model=List[schemas.User])
+def get_busy_user(db: Session = Depends(get_db)):
+    return crud_user.get_free_or_busy_user(db, True)
 
 
 @router.post("/create-user", tags=["user"], response_model=schemas.User)
 def create_user(*, db: Session = Depends(get_db), user_in: schemas.User_create):
-    """
-    Создание пользователя
-    :param db: сессия БД
-    :param user_in: pydantic модель создания пользователя
-    :return:
-    """
     user = crud_user.get_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует.")
-    user = crud_user.create(db, obj_in=user_in)
-
-    return user
+    return crud_user.create(db, obj_in=user_in)
 
 
 @router.put("/update-user", tags=["user"], response_model=schemas.User)
@@ -136,8 +119,6 @@ def add_avatar_user(user_id: int, db: Session = Depends(get_db), avatar: UploadF
     crud_user.add_avatar_user_by_user_id(db, user_id, avatar, path_user)
 
 
-
-
 @router.get("/decode-token", tags=["token"])
 def decode_access_token(token):
     res = decode_token(token)
@@ -151,8 +132,3 @@ def delete_user(*, db: Session = Depends(get_db), user_id: int):
         raise HTTPException(status_code=400, detail=f"Пользователь c id {user_id} не найден")
 
     crud_user.delete_user_by_id(db, user_id)
-
-
-
-
-

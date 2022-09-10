@@ -17,12 +17,15 @@ import src.user.schemas as schemas_user
 
 
 class CRUDProject(CRUDBase):
-    def get_by_project_name(self, db_session: Session, project_name: str):
+    def get_project_by_name(self, db_session: Session, project_name: str):
         return db_session.query(models.Project).filter(models.Project.name == project_name).first()
 
 
     def get_links_by_id_project(self, db_session: Session, project_id: int) -> Optional[schemas.Project_links_in_db]:
         return db_session.query(models.Project_link).filter(models.Project_link.id_project == project_id).all()
+
+    def get_status_projects(self, db_session: Session, flag: bool) -> List[Optional[schemas.Project_links_in_db]]:
+        return db_session.query(models.Project).filter(models.Project.status == flag).all()
 
 
     def get_team_project_by_project_id(self, db_session: Session, project_id: int) -> List[Optional[schemas_user.User]]:
@@ -72,7 +75,7 @@ class CRUDProject(CRUDBase):
         return path_project
 
 
-    def create(self, db_session: Session, obj_in: schemas.Project_create, files: list) -> Optional[schemas.Project_base_in_db]:
+    def create(self, db_session: Session, obj_in: schemas.Project_create, files: list = None) -> Optional[schemas.Project_base_in_db]:
         try:
             project = models.Project(name=obj_in.name, customer=obj_in.customer,
                                      project_start=obj_in.project_start, project_completion=obj_in.project_completion,
@@ -82,6 +85,8 @@ class CRUDProject(CRUDBase):
             db_session.flush()
             project_id = self.get_by_project_name(db_session, obj_in.name)
             for i in obj_in.team:
+                db_session.query(models_user.User).filter(models_user.User.id == i).\
+                    update({models_user.User.busy_status: True})
                 team_project = models.Project_team(project_id=project_id.id, user_id=i)
                 db_session.add(team_project)
             db_session.commit()
@@ -99,7 +104,7 @@ class CRUDProject(CRUDBase):
                 models.Project.project_completion: obj_in.project_completion,
                 models.Project.description: obj_in.description,
                 models.Project.path_design_documents: obj_in.path_design_documents,
-                models.Project.team_lead: obj_in.team_lead, models.Project.status: obj_in.status})
+                models.Project.team_lead: obj_in.team_lead})
             db_session.flush()
             for i in obj_in.team:
                 team_project = models.Project_team(project_id=project_id, user_id=i)
@@ -109,6 +114,22 @@ class CRUDProject(CRUDBase):
         except IntegrityError as ex:
             db_session.rollback()
             raise HTTPException(status_code=400, detail=f"id пользователя которого вы хотите добавить в команду не найден\n{ex}")
+
+
+    def closing_project_by_id(self, db_session: Session, project_id: int) -> Optional[schemas.Project_base_in_db]:
+        try:
+            db_session.query(models.Project).filter(models.Project.id == project_id).\
+                update({models.Project.status: False})
+            db_session.flush()
+            project_team = self.get_team_project_by_project_id(db_session, project_id)
+            for user in project_team[1:]:
+                ic(user.id)
+                db_session.query(models_user.User).filter(models_user.User.id == user.id).\
+                    update({models_user.User.busy_status: False})
+            db_session.commit()
+        except Exception as ex:
+            ic(ex)
+            db_session.rollback()
 
 
     def add_links_project(self, db_session: Session, obj_in: schemas.Project_links, project_id: int):
@@ -151,11 +172,6 @@ class CRUDProject(CRUDBase):
         except Exception as ex:
             ic(ex)
             db_session.rollback()
-
-
-
-
-
 
 
 crud_project = CRUDProject(models.Project)

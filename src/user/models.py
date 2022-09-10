@@ -23,6 +23,7 @@ class User(Base):
     experience = Column(Date)
     role = Column(Integer, ForeignKey('roles.id'))
     super_user = Column(Boolean)
+    busy_status = Column(Boolean)
 
     user_id_teamlead = relationship("Project")
     user_id_token = relationship("User_token")

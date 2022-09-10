@@ -16,6 +16,8 @@ app = FastAPI(title="HTW_manager")
 # TODO: разграничить права доступа, для супер пользователя и обычных пользователей
 # TODO: сделать для тестов дешифратор паролей
 
+
+
 @app.middleware('http')
 async def db_session_middleware(request: Request, call_next):
     response = Response('Internal server error', status_code=500)

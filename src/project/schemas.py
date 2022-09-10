@@ -12,7 +12,6 @@ class Project_base(BaseModel):
     description: str
     path_design_documents: str
     team_lead: int
-    status: bool
 
 
 class Project_links(BaseModel):
@@ -33,6 +32,7 @@ class Project_update(Project_base):
 
 class Project_base_in_db(Project_base):
     id: int
+    status: bool
 
     class Config:
         orm_mode = True

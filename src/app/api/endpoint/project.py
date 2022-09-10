@@ -26,7 +26,6 @@ router = APIRouter()
 # TODO: добавить возможность получать файлы из файловой помойки проекта
 
 
-
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
 def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_create):
     check_project = crud_project.get_by_project_name(db, obj_in.name)
@@ -42,6 +41,15 @@ def update_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_upd
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
     return crud_project.update_by_project_id(db, obj_in, project_id)
+
+
+@router.put("/closing-project", tags=["project"], response_model=schemas.Project_base_in_db)
+def closing_project(project_id: int, db: Session = Depends(get_db)):
+    project = crud_project.get_by_id(db, project_id)
+    if not project:
+        raise HTTPException(status_code=400, detail=f"Проект с id {project_id} не найден")
+    crud_project.closing_project_by_id(db, project_id)
+
 
 
 @router.put("/add-files-project", tags=["project"])
@@ -69,11 +77,11 @@ def delete_file_project(*, db: Session = Depends(get_db), project_id: int, file_
 
 
 @router.get("/get-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
-def get_all_projects(*, db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
-    return crud_project.get_multi(db, skip=skip, limit=limit)
+def get_all_projects(*, db: Session = Depends(get_db)):
+    return crud_project.get_multi(db)
 
 
-@router.get("/get-by-project-id", tags=["project-get"], response_model=schemas.Project_base_in_db)
+@router.get("/get-project-by-id", tags=["project-get"], response_model=schemas.Project_base_in_db)
 def get_project_by_id(*, db: Session = Depends(get_db), project_id: int):
     project = crud_project.get_by_id(db, project_id)
     if not project:
@@ -81,12 +89,23 @@ def get_project_by_id(*, db: Session = Depends(get_db), project_id: int):
     return project
 
 
-@router.get("/get-by-project-name", tags=["project-get"], response_model=schemas.Project_base_in_db)
+@router.get("/get-project-by-name", tags=["project-get"], response_model=schemas.Project_base_in_db)
 def get_project_by_name(*, db: Session = Depends(get_db), project_name: str):
-    project = crud_project.get_by_project_name(db, project_name)
+    project = crud_project.get_project_by_name(db, project_name)
     if not project:
         raise HTTPException(status_code=400, detail=f"Проект с именем {project_name} не найден")
-    return crud_project.get_by_project_name(db, project_name)
+    return project
+
+
+@router.get("/get-active-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
+def get_active_projects(db: Session = Depends(get_db)):
+    return crud_project.get_status_projects(db, True)
+
+
+@router.get("/get-completed-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
+def get_completed_projects(db: Session = Depends(get_db)):
+    return crud_project.get_status_projects(db, False)
+
 
 
 @router.get("/get-links-project", tags=["project-get"], response_model=List[schemas.Project_links_in_db])
@@ -118,7 +137,7 @@ def get_files_project(*, db: Session = Depends(get_db), project_id: int):
 
 @router.get("/get-user-projects", tags=["user-get"], response_model=List[schemas.Project_base_in_db])
 def get_user_projects_by_id(*, db: Session = Depends(get_db), user_id: int):
-    user = crud_user.get_by_user_id(db, user_id)
+    user = crud_user.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=400, detail=f"Пользователь c id {user_id} не найден")
     user_projects = crud_project.get_user_project_by_user_id(db, user_id)
