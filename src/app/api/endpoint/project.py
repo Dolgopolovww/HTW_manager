@@ -1,29 +1,19 @@
-import os
-import shutil
-import sys
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Security, Query, File, UploadFile, Header, Form
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from icecream import ic
-
-
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from starlette.responses import FileResponse
 
 from src.app.db.db import get_db
-
 from src.project import schemas
 from src.project.service import crud_project
-
 from src.user.schemas import User
 from src.user.service import crud_user
 
-from pyfa_converter import FormDepends, PyFaDepends
-
-
 router = APIRouter()
 
-# TODO: добавить возможность получать файлы из файловой помойки проекта
+# TODO: переписать сохранение файла, так как, необходимо хранить путь до файла и имя файла в разны
 
 
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
@@ -51,16 +41,17 @@ def closing_project(project_id: int, db: Session = Depends(get_db)):
     crud_project.closing_project_by_id(db, project_id)
 
 
-
-@router.put("/add-files-project", tags=["project"])
+@router.post("/add-files-project", tags=["project"])
 def add_files_project(project_id: int, db: Session = Depends(get_db), files: List[UploadFile] = File(...)):
     check_project = crud_project.get_by_id(db, project_id)
     if not check_project:
         raise HTTPException(status_code=400, detail=f"Нельзя добавить файлы в несуществующий проект")
-    path_project = crud_project.path_validation(check_project.name)
+
+    path_project = crud_project.path_validation(check_project.name)  # путь до папки проекта
     res = []
     for file in files:
-        check_file = crud_project.file_validator(db, f"{path_project}/{file.filename}")
+        ic(file.content_type)
+        check_file = crud_project.file_validator(db, file.filename)
         if check_file:
             res.append(f"Файл с именем {file.filename} уже существует")
             pass
@@ -73,7 +64,6 @@ def add_files_project(project_id: int, db: Session = Depends(get_db), files: Lis
 @router.delete("/delete-file-project", tags=["project"])
 def delete_file_project(*, db: Session = Depends(get_db), project_id: int, file_id: int):
     crud_project.delete_file_by_project_id(db, project_id, file_id)
-
 
 
 @router.get("/get-projects", tags=["project-get"], response_model=List[schemas.Project_base_in_db])
@@ -107,7 +97,6 @@ def get_completed_projects(db: Session = Depends(get_db)):
     return crud_project.get_status_projects(db, False)
 
 
-
 @router.get("/get-links-project", tags=["project-get"], response_model=List[schemas.Project_links_in_db])
 def get_project_links_by_id(*, db: Session = Depends(get_db), project_id: int):
     return crud_project.get_links_by_id_project(db, project_id)
@@ -124,7 +113,13 @@ def get_team_project(*, db: Session = Depends(get_db), project_id: int):
     return team_project
 
 
-@router.get("/get-files-project", tags=["project-get"], response_model=List[schemas.Project_files_in_db])
+@router.get("/get-project-file", tags=["project-get"])
+def get_project_file(file_id: int, db: Session = Depends(get_db)):
+    file = crud_project.get_file_by_id(db, file_id)
+    return FileResponse(file.path_project + "/" + file.file_name, media_type=file.content_type, filename=file.file_name)
+
+
+@router.get("/get-project-files", tags=["project-get"], response_model=List[schemas.Project_files_in_db])
 def get_files_project(*, db: Session = Depends(get_db), project_id: int):
     project = crud_project.get_by_id(db, project_id)
     if not project:
@@ -154,6 +149,3 @@ def add_link_project(*, db: Session = Depends(get_db), links: List[schemas.Proje
 @router.delete("/delete-link-project", tags=["project"])
 def delete_link_project(*, db: Session = Depends(get_db), project_id: int, link_id: int):
     crud_project.delete_link(db, project_id, link_id)
-
-
-

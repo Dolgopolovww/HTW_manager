@@ -39,7 +39,9 @@ class Project_file(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_project = Column(Integer, ForeignKey("projects.id"))
-    path_file = Column(String)
+    path_project = Column(String)
+    file_name = Column(String)
+    content_type = Column(String)
 
 
 class Project_team(Base):

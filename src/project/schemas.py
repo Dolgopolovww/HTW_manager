@@ -19,7 +19,8 @@ class Project_links(BaseModel):
     description: str
 
 class Project_files(BaseModel):
-    path_file: str
+    path_project: str
+    file_name: str
 
 
 class Project_create(Project_base):
