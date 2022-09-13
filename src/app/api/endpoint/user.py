@@ -1,7 +1,9 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from icecream import ic
 from sqlalchemy.orm import Session
+from starlette.responses import FileResponse
 
 from core.jwt import decode_token, create_token, refresh_token, save_token, update_user_tokens, delete_old_refresh_token
 from src.app.db.db import get_db
@@ -10,9 +12,6 @@ from src.user import schemas
 from src.user.service import crud_user
 
 router = APIRouter()
-
-
-# TODO: добавить возможность получать аватарку пользователя
 
 
 @router.post("/auth/login", response_model=Token_auth, tags=["auth"])
@@ -92,6 +91,12 @@ def get_busy_user(db: Session = Depends(get_db)):
     return crud_user.get_free_or_busy_user(db, True)
 
 
+@router.get("/get-user-avatar", tags=["user-get"])
+def get_user_avatar(user_id: int, db: Session = Depends(get_db)):
+    avatar = crud_user.get_avatar_user(db, user_id)
+    return FileResponse(avatar.path_user + avatar.file_name, media_type=avatar.content_type, filename=avatar.file_name)
+
+
 @router.post("/create-user", tags=["user"], response_model=schemas.User)
 def create_user(*, db: Session = Depends(get_db), user_in: schemas.User_create):
     user = crud_user.get_by_email(db, email=user_in.email)
@@ -106,13 +111,16 @@ def update_user(*, db: Session = Depends(get_db), user_in: schemas.User_update,
     return crud_user.update_by_user_id(db_session=db, obj_in=user_in, user_id=user_id)
 
 
-@router.put("/add-avatar-user", tags=["user"])
+@router.post("/add-avatar-user", tags=["user"])
 def add_avatar_user(user_id: int, db: Session = Depends(get_db), avatar: UploadFile = File(...)):
-    user = crud_user.get_by_user_id(db, user_id)
+    user = crud_user.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=400, detail=f"Пользователь с id {user_id} не найден")
-    path_user = crud_user.path_validation(user_id)
 
+    if "image" not in avatar.content_type:
+        raise HTTPException(status_code=400, detail=f"Формат изображения должен быть jpg или png")
+
+    path_user = crud_user.path_validation(user_id)
     get_avatar_user = crud_user.get_avatar_user(db, user_id)
     if get_avatar_user:
         crud_user.delete_avatar_user(db, user_id)

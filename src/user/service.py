@@ -35,15 +35,15 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
 
     def path_validation(self, user_id: int):
         root_dir = os.path.dirname(sys.modules['__main__'].__file__)
-        if os.path.exists(f"{root_dir}/users"):
+        if os.path.exists(f"{root_dir}\\users"):
             pass
         else:
-            os.mkdir(f"{root_dir}/users")
-        if os.path.exists(f"{root_dir}/users/{user_id}"):
+            os.mkdir(f"{root_dir}\\users")
+        if os.path.exists(f"{root_dir}\\users\\{user_id}"):
             pass
         else:
-            os.mkdir(f"{root_dir}/users/{user_id}")
-        path_user = f"{root_dir}/users/{user_id}"
+            os.mkdir(f"{root_dir}\\users\\{user_id}")
+        path_user = f"{root_dir}\\users\\{user_id}\\"
         return path_user
 
     def create(self, db_session: Session, *, obj_in: schemas.User_create) -> schemas.User_base_in_db:
@@ -74,13 +74,14 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
 
     def add_avatar_user_by_user_id(self, db_session: Session, user_id: int, avatar: UploadFile, path_user: str):
         try:
-            req = User_avatar(user_id=user_id, avatar_path=f"{path_user}/{avatar.filename}")
+            req = User_avatar(user_id=user_id, path_user=path_user, file_name=avatar.filename,
+                              content_type=avatar.content_type)
             db_session.add(req)
             db_session.commit()
-            with open(f"{path_user}/{avatar.filename}", "wb") as buffer:
+            with open(f"{path_user}{avatar.filename}", "wb") as buffer:
                 shutil.copyfileobj(avatar.file, buffer)
         except Exception as ex:
-            ic(ex)
+            ic("add_avatar_user_by_user_id", ex)
             db_session.rollback()
 
     def delete_avatar_user(self, db_session: Session, user_id: int):
@@ -88,10 +89,10 @@ class CRUDUser(CRUDBase[schemas.User, schemas.User_create, schemas.User_update])
             avatar_user = db_session.query(User_avatar).filter(User_avatar.user_id == user_id).first()
             db_session.delete(avatar_user)
             db_session.flush()
-            os.remove(avatar_user.avatar_path)
+            os.remove(avatar_user.path_user + avatar_user.file_name)
             db_session.commit()
         except Exception as ex:
-            ic(ex)
+            ic("delete_avatar_user", ex)
             db_session.rollback()
 
     def authenticate(self, db_session: Session, *, email: str, password: str) -> Optional[schemas.User]:

@@ -48,6 +48,6 @@ class User_avatar(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    avatar_path = Column(String)
-
-
+    path_user = Column(String)
+    file_name = Column(String)
+    content_type = Column(String)
