@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.post("/create-project", tags=["project"], response_model=schemas.Project_base_in_db)
 def create_project(*, db: Session = Depends(get_db), obj_in: schemas.Project_create):
-    check_project = crud_project.get_by_project_name(db, obj_in.name)
+    check_project = crud_project.get_project_by_name(db, obj_in.name)
     if check_project:
         raise HTTPException(status_code=400, detail="Проект с таким именем уже существует.")
     project = crud_project.create(db, obj_in)
@@ -111,6 +111,16 @@ def get_team_project(*, db: Session = Depends(get_db), project_id: int):
     if not team_project:
         raise HTTPException(status_code=400, detail=f"У проекта с id {project_id} не назначена команда")
     return team_project
+
+@router.get("/get-project-team-lead", tags=["project-get"], response_model=User)
+def get_team_lead_project(*, db: Session = Depends(get_db), project_id: int):
+    project = crud_project.get_by_id(db, project_id)
+    if not project:
+        raise HTTPException(status_code=400, detail=f"Проект c id {project_id} не найден")
+    team_lead_project = crud_project.get_team_lead_project_by_project_id(db, project_id)
+    if not team_lead_project:
+        raise HTTPException(status_code=400, detail=f"У проекта с id {project_id} не назначена тимлид")
+    return team_lead_project
 
 
 @router.get("/get-project-file", tags=["project-get"])

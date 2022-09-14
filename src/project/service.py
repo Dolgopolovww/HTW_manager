@@ -34,14 +34,14 @@ class CRUDProject(CRUDBase):
         """
         project_team = db_session.query(models_user.User).select_from(models.Project_team) \
             .join(models_user.User).filter(models.Project_team.project_id == project_id).all()
+        return project_team
 
+
+    def get_team_lead_project_by_project_id(self, db_session: Session, project_id: int) -> Optional[schemas_user.User]:
         project_team_lead = db_session.query(models_user.User).select_from(models.Project). \
-            join(models_user.User).filter(models.Project.id == project_id).all()
+            join(models_user.User).filter(models.Project.id == project_id).first()
+        return project_team_lead
 
-        if project_team_lead[0] in project_team:
-            return project_team
-        else:
-            return project_team_lead + project_team
 
     def get_user_project_by_user_id(self, db_session: Session, user_id: int) -> List[
         "Optional[schemas.Project_base_in_db]"]:
@@ -78,10 +78,14 @@ class CRUDProject(CRUDBase):
             project = models.Project(name=obj_in.name, customer=obj_in.customer,
                                      project_start=obj_in.project_start, project_completion=obj_in.project_completion,
                                      description=obj_in.description, path_design_documents=obj_in.path_design_documents,
-                                     team_lead=obj_in.team_lead, status=obj_in.status)
+                                     team_lead=obj_in.team_lead, status=True)
             db_session.add(project)
             db_session.flush()
-            project_id = self.get_by_project_name(db_session, obj_in.name)
+            project_id = self.get_project_by_name(db_session, obj_in.name)
+
+            db_session.query(models_user.User).filter(models_user.User.id == obj_in.team_lead). \
+                update({models_user.User.busy_status: True})
+
             for i in obj_in.team:
                 db_session.query(models_user.User).filter(models_user.User.id == i). \
                     update({models_user.User.busy_status: True})
